@@ -1,6 +1,8 @@
 ---
+marp: true
 theme: default
 title: "Personal Planner — AI Study Mentor"
+auto-advance: 20
 ---
 
 # 🎯 Personal Planner
