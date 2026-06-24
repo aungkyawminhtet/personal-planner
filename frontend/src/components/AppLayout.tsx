@@ -34,8 +34,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   const navItems = [
-    { name: 'Dashboard', href: '/dashboard', icon: <BarChart2 className="w-4 h-4" /> },
     { name: 'Generate Goal', href: '/', icon: <Sparkles className="w-4 h-4" /> },
+    { name: 'Dashboard', href: '/dashboard', icon: <BarChart2 className="w-4 h-4" /> },
   ];
 
   return (
@@ -52,7 +52,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
             <div>
               <span className="text-zinc-900 font-extrabold text-sm tracking-tight block">AI Task Planner</span>
-              <span className="text-zinc-450 text-[10px] uppercase font-bold block tracking-wider">Your Mentor</span>
+              <span className="text-zinc-455 text-[10px] uppercase font-bold block tracking-wider">Your Mentor</span>
             </div>
           </div>
 
@@ -79,22 +79,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
         {/* User Card */}
         <div className="p-4 border-t border-zinc-200/80 bg-zinc-50/50">
-          <div className="flex flex-col gap-2.5">
-            <div className="flex items-center gap-3 bg-white p-2.5 rounded-xl border border-zinc-200/60">
-              <div className="w-8 h-8 rounded-lg bg-violet-100 text-violet-750 font-bold flex items-center justify-center text-xs uppercase shrink-0">
-                {user.name ? user.name[0] : 'U'}
-              </div>
-              <div className="overflow-hidden min-w-0">
-                <span className="font-bold text-zinc-900 text-xs truncate block">{user.name}</span>
-                <span className="text-[10px] text-zinc-450 truncate block">{user.email}</span>
-              </div>
+          <div className="flex items-center gap-3 bg-white p-2.5 rounded-xl border border-zinc-200/60 shadow-2xs">
+            <div className="w-8 h-8 rounded-lg bg-violet-100 text-violet-750 font-bold flex items-center justify-center text-xs uppercase shrink-0">
+              {user.name ? user.name[0] : 'U'}
             </div>
-            <button
-              onClick={logout}
-              className="w-full text-center text-xs font-bold text-zinc-600 bg-zinc-200/70 hover:bg-red-50 hover:text-red-650 hover:border-red-100 border border-transparent transition-all py-2.5 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <LogOut className="w-3.5 h-3.5" /> Sign Out
-            </button>
+            <div className="overflow-hidden min-w-0">
+              <span className="font-bold text-zinc-900 text-xs truncate block">{user.name}</span>
+              <span className="text-[10px] text-zinc-450 truncate block">{user.email}</span>
+            </div>
           </div>
         </div>
 
@@ -131,12 +123,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   {item.name}
                 </Link>
               ))}
-              <button 
-                onClick={logout} 
-                className="text-[10px] font-bold px-3 py-1.5 rounded-xl border border-red-200 bg-red-50 text-red-750"
-              >
-                Exit
-              </button>
             </div>
             <span className="text-zinc-450 text-xs hidden md:block font-medium">
               {new Date().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}

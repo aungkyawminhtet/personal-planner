@@ -5,7 +5,9 @@ import {
   getOverdueTasks, 
   rescheduleTask, 
   addTaskNotes, 
-  reduceTaskDifficulty 
+  reduceTaskDifficulty,
+  getTaskChatHistory,
+  askTaskAssistant
 } from '../controllers/taskController';
 import { authMiddleware } from '../middleware/auth';
 
@@ -19,5 +21,7 @@ router.patch('/tasks/:id/toggle', toggleTask);
 router.patch('/tasks/:id/reschedule', rescheduleTask);
 router.patch('/tasks/:id/notes', addTaskNotes);
 router.patch('/tasks/:id/reduce-difficulty', reduceTaskDifficulty);
+router.get('/tasks/:id/chat-history', getTaskChatHistory as any);
+router.post('/tasks/:id/ask', askTaskAssistant as any);
 
 export default router;

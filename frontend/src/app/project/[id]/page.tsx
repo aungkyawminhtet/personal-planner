@@ -12,6 +12,7 @@ import {
   Sparkles, Calendar, Clock, Award, Activity, MessageSquare, 
   Send, HelpCircle, AlertCircle, Edit, Trash2, CheckCircle2, ChevronDown, ChevronUp, Save
 } from 'lucide-react';
+import TaskChatDrawer from '../../../components/TaskChatDrawer';
 
 export default function ProjectPage() {
   const params = useParams();
@@ -27,6 +28,10 @@ export default function ProjectPage() {
   const [expandedRescheduleTaskId, setExpandedRescheduleTaskId] = useState<string | null>(null);
   const [taskNotesInput, setTaskNotesInput] = useState('');
   const [taskRescheduleInput, setTaskRescheduleInput] = useState('');
+
+  // Drawer task states
+  const [activeDrawerTask, setActiveDrawerTask] = useState<any>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   // AI Mentor Chat states
   const [chatMessages, setChatMessages] = useState<any[]>([]);
@@ -187,7 +192,7 @@ export default function ProjectPage() {
         <div className="bg-white p-8 rounded-3xl border border-zinc-200 text-center max-w-sm shadow-xl">
           <h2 className="text-red-650 font-bold text-lg mb-2">Error</h2>
           <p className="text-zinc-500 text-sm mb-6">{error || 'Project not found'}</p>
-          <Link href="/dashboard" className="bg-violet-650 hover:bg-violet-550 text-white py-2.5 px-4 rounded-xl text-sm font-semibold transition-all">
+          <Link href="/dashboard" className="bg-violet-650 hover:bg-violet-555 text-white py-2.5 px-4 rounded-xl text-sm font-semibold transition-all">
             Back to Dashboard
           </Link>
         </div>
@@ -410,6 +415,18 @@ export default function ProjectPage() {
                               {showNotes ? 'Cancel Notes' : task.notes ? 'Edit Notes' : '+ Add Notes'}
                             </button>
 
+                            {/* Study Assistant button */}
+                            <button 
+                              onClick={() => {
+                                setActiveDrawerTask(task);
+                                setIsDrawerOpen(true);
+                              }}
+                              className="text-violet-605 hover:text-violet-850 font-extrabold flex items-center gap-0.5 cursor-pointer ml-2 bg-violet-50 border border-violet-100 px-1.5 py-0.5 rounded-lg text-[9px]"
+                              title="Ask AI Study Assistant for advice or code snippets"
+                            >
+                              🎓 Study Help
+                            </button>
+
                             {/* Simplify / Reduce Difficulty (AI feature) */}
                             {!task.isCompleted && task.difficultyLevel !== 'easy' && (
                               <button 
@@ -554,6 +571,12 @@ export default function ProjectPage() {
         </div>
 
       </div>
+      
+      <TaskChatDrawer 
+        task={activeDrawerTask}
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+      />
     </main>
   );
 }

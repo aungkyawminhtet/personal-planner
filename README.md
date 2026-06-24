@@ -4,13 +4,14 @@ An AI-powered personal planner that turns your learning goals into structured ro
 
 ## ✨ Features
 
-- **AI Plan Generation** — Describe a goal, get a full roadmap with tasks, deadlines, and difficulty ratings
-- **AI Mentor Chat** — Context-aware conversational mentor that knows your project
-- **Pacing Analysis** — AI detects overdue tasks and redistributes deadlines automatically
-- **Dashboard** — Analytics, daily missions, overdue alerts, and accomplishments tracking
-- **Difficulty Reduction** — AI simplifies tasks that are too hard by breaking them down
-- **Task Notes** — Add personal notes to any task
-- **Notifications** — Overdue task alerts and system messages
+- **AI Plan Generation** — Describe a goal, get a full roadmap with tasks, deadlines, and difficulty ratings.
+- **AI Mentor Chat** — Context-aware conversational mentor that knows your project.
+- **AI Task Study Assistant** — Contextual chat sidebar drawer for individual tasks to get step-by-step technical guidance, conceptual explanations, or code skeletons.
+- **Pacing Analysis** — AI detects overdue tasks and redistributes deadlines automatically.
+- **Dashboard** — Analytics, daily missions, overdue alerts, and accomplishments tracking.
+- **Difficulty Reduction** — AI simplifies tasks that are too hard by breaking them down.
+- **Task Notes** — Add personal notes to any task.
+- **Notifications** — Overdue task alerts and system messages.
 
 ## 🏗️ Tech Stack
 
@@ -40,11 +41,10 @@ personal-planner/
 │   │   ├── app/
 │   │   │   ├── actions/      # Server actions (auth, plan, project, analytics, mentor, notification)
 │   │   │   ├── dashboard/    # Dashboard page
-│   │   │   ├── login/        # Login page
-│   │   │   ├── register/     # Registration page
-│   │   │   └── project/[id]/ # Project detail page with task checklist + AI mentor
-│   │   ├── components/       # Shared components (AppLayout)
-│   │   ├── context/          # AuthContext (React Context)
+│   │   │   ├── project/[id]/ # Project detail page with task checklist + AI mentor
+│   │   │   └── page.tsx      # Goal creation form (root route)
+│   │   ├── components/       # Shared components (AppLayout, TaskChatDrawer)
+│   │   ├── context/          # AuthContext (React Context with automatic seed login)
 │   │   └── store/            # Zustand store (notifications)
 │   ├── package.json
 │   └── tsconfig.json
@@ -109,7 +109,10 @@ The app runs at `http://localhost:3000`.
 
 ### 4. Open the app
 
-Visit [http://localhost:3000](http://localhost:3000) and register a new account, or log in with the demo credentials above.
+Visit [http://localhost:3000](http://localhost:3000). 
+Authentication is **automatically bypassed on startup**, silently logging in with the seeded demo user under the hood so you land directly on the **Generate Goal** page.
+
+---
 
 ## 📡 API Endpoints
 
@@ -137,6 +140,8 @@ Visit [http://localhost:3000](http://localhost:3000) and register a new account,
 | PATCH | `/api/tasks/:id/reschedule` | Reschedule task deadline |
 | PATCH | `/api/tasks/:id/notes` | Add/update task notes |
 | PATCH | `/api/tasks/:id/reduce-difficulty` | AI simplifies the task |
+| GET | `/api/tasks/:id/chat-history` | Get chat history for a specific task study assistant |
+| POST | `/api/tasks/:id/ask` | Send message to AI task study assistant |
 
 ### AI
 | Method | Endpoint | Description |
@@ -158,15 +163,17 @@ Visit [http://localhost:3000](http://localhost:3000) and register a new account,
 | POST | `/api/notifications/read` | Mark all notifications read |
 | POST | `/api/notifications/check-overdue` | Scan and create overdue notifications |
 
+---
+
 ## 🔑 Pages
 
 | Route | Description |
 |-------|-------------|
 | `/` | Goal creation form — describe what you want to learn |
-| `/dashboard` | Overview with analytics, today's missions, notifications |
+| `/dashboard` | Overview with analytics, today's missions, accomplishments, notifications |
 | `/project/[id]` | Project detail with task checklist and AI mentor chat |
-| `/login` | Login page |
-| `/register` | Registration page |
+
+---
 
 ## 🛠️ Development Commands
 
@@ -183,8 +190,6 @@ npm start        # Run production build
 ```bash
 npm run dev      # Start Next.js dev server (port 3000)
 npm run build    # Production build
-npm start        # Run production server
-npm run lint     # Run ESLint
 ```
 
 ## 📄 License

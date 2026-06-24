@@ -3,6 +3,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import Task from '../models/Task';
 import Project from '../models/Project';
 import { AuthRequest } from '../middleware/auth';
+import MentorAdvice from '../models/MentorAdvice';
 
 export const updateTask = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -213,5 +214,90 @@ export const reduceTaskDifficulty = async (req: AuthRequest, res: Response): Pro
   } catch (error: any) {
     console.error("Error reducing difficulty:", error);
     res.status(500).json({ error: error.message || "Failed to reduce task difficulty" });
+  }
+};
+
+export const getTaskChatHistory = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const chatHistory = await MentorAdvice.find({ taskId: id, userId }).sort({ createdAt: 1 });
+    res.status(200).json(chatHistory);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const askTaskAssistant = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { message, projectId } = req.body;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    if (!message || !projectId) {
+      res.status(400).json({ error: 'Message and projectId are required' });
+      return;
+    }
+
+    const task = await Task.findById(id);
+    if (!task) {
+      res.status(404).json({ error: 'Task not found' });
+      return;
+    }
+
+    const project = await Project.findOne({ _id: projectId, userId });
+    if (!project) {
+      res.status(404).json({ error: 'Project not found' });
+      return;
+    }
+
+    const chatHistory = await MentorAdvice.find({ taskId: id, userId }).sort({ createdAt: 1 });
+
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
+
+    let historyContext = chatHistory.map((chat: any) => `${chat.role === 'user' ? 'User' : 'Assistant'}: ${chat.message}`).join('\n');
+
+    const prompt = `
+      You are an expert AI Study Assistant. Your role is to help the user complete their specific task: "${task.title}".
+      This task is part of the project: "${project.title}".
+      
+      Task Context:
+      - Description: ${task.description || 'No description provided.'}
+      - Difficulty Level: ${task.difficultyLevel || 'medium'}
+      - Estimated Duration: ${task.estimatedHours || 1} hours
+      - Notes from User: ${task.notes || 'None'}
+      - Status: ${task.isCompleted ? 'Completed' : 'In Progress'}
+      
+      Here is the dialogue history for this task:
+      ${historyContext}
+      
+      User's new message/question about this task: "${message}"
+      
+      Provide highly specific, practical advice, step-by-step guidance, code skeletons, or conceptual explanations to help the user master and complete this exact task. Be direct, technical, encouraging, and clear. Do not use markdown syntax in JSON fields.
+    `;
+
+    const result = await model.generateContent(prompt);
+    const assistantReply = result.response.text().trim();
+
+    // Log the messages
+    await MentorAdvice.create({ userId, projectId: projectId as any, taskId: id as any, role: 'user', message });
+    const savedAdvice = await MentorAdvice.create({ userId, projectId: projectId as any, taskId: id as any, role: 'mentor', message: assistantReply });
+
+    res.status(200).json({ reply: assistantReply, chat: savedAdvice });
+  } catch (error: any) {
+    console.error("Error in askTaskAssistant:", error);
+    res.status(500).json({ error: error.message || "Failed to get advice from task assistant" });
   }
 };

@@ -9,6 +9,7 @@ import {
   Plus, Bell, CheckCircle2, AlertCircle, Trash2, Calendar, 
   TrendingUp, Award, Clock, ChevronRight, CheckSquare, Sparkles, RefreshCw
 } from 'lucide-react';
+import TaskChatDrawer from '../../components/TaskChatDrawer';
 
 export default function DashboardPage() {
   const [data, setData] = useState<any>(null);
@@ -17,6 +18,10 @@ export default function DashboardPage() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [expandedNotesTaskId, setExpandedNotesTaskId] = useState<string | null>(null);
   const [taskNotesInput, setTaskNotesInput] = useState('');
+  
+  // Drawer task states
+  const [activeDrawerTask, setActiveDrawerTask] = useState<any>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   // Zustand Store
   const { 
@@ -133,7 +138,7 @@ export default function DashboardPage() {
         <div className="bg-white border border-zinc-200 p-8 rounded-3xl text-center max-w-sm shadow-xl">
           <h2 className="text-red-650 font-bold text-lg mb-2">Error</h2>
           <p className="text-zinc-500 text-sm mb-6">{error || 'Failed to load'}</p>
-          <button onClick={fetchAllData} className="bg-violet-600 hover:bg-violet-550 text-white py-2.5 px-5 rounded-xl text-sm font-semibold transition-all cursor-pointer">
+          <button onClick={fetchAllData} className="bg-violet-650 hover:bg-violet-550 text-white py-2.5 px-5 rounded-xl text-sm font-semibold transition-all cursor-pointer">
             Retry Connection
           </button>
         </div>
@@ -158,7 +163,7 @@ export default function DashboardPage() {
             <h1 className="text-2xl font-black text-zinc-900 tracking-tight flex items-center gap-2">
               <Sparkles className="w-6 h-6 text-violet-650" /> Mentor Dashboard
             </h1>
-            <p className="text-zinc-500 text-sm mt-0.5 font-medium">Welcome back! Review your active paths and missions.</p>
+            <p className="text-zinc-550 text-sm mt-0.5 font-medium">Welcome back! Review your active paths and missions.</p>
           </div>
           
           <div className="flex items-center gap-3">
@@ -193,7 +198,7 @@ export default function DashboardPage() {
                     <span className="font-bold text-xs uppercase tracking-wider text-zinc-400">Notifications</span>
                     <button 
                       onClick={() => setShowNotifications(false)}
-                      className="text-zinc-500 hover:text-zinc-900 text-xs cursor-pointer font-bold"
+                      className="text-zinc-550 hover:text-zinc-900 text-xs cursor-pointer font-bold"
                     >
                       Close
                     </button>
@@ -226,7 +231,7 @@ export default function DashboardPage() {
             {/* Run overdue scan button */}
             <button
               onClick={handleTriggerScan}
-              className="p-3 bg-white border border-zinc-200 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-xs font-bold"
+              className="p-3 bg-white border border-zinc-200 text-zinc-650 hover:text-zinc-900 hover:bg-zinc-50 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-xs font-bold"
               title="Trigger Scan for Overdue Tasks & Emails"
             >
               <RefreshCw className="w-4 h-4 text-zinc-500" /> Check Overdue
@@ -234,7 +239,7 @@ export default function DashboardPage() {
 
             <Link 
               href="/" 
-              className="bg-violet-600 hover:bg-violet-550 text-white font-bold text-xs py-3.5 px-4 rounded-xl shadow-lg shadow-violet-600/10 transition-all flex items-center gap-1.5"
+              className="bg-violet-600 hover:bg-violet-555 text-white font-bold text-xs py-3.5 px-4 rounded-xl shadow-lg shadow-violet-600/10 transition-all flex items-center gap-1.5"
             >
               <Plus className="w-4 h-4" /> New Goal
             </Link>
@@ -330,7 +335,7 @@ export default function DashboardPage() {
                               </span>
                             )}
                           </span>
-                          <span className="text-[10px] text-zinc-450 font-medium block truncate">
+                          <span className="text-[10px] text-zinc-455 font-medium block truncate">
                             Goal: {task.projectId?.title || 'Unknown Project'}
                           </span>
 
@@ -349,9 +354,18 @@ export default function DashboardPage() {
                                 setExpandedNotesTaskId(expandedNotesTaskId === task._id ? null : task._id);
                                 setTaskNotesInput(task.notes || '');
                               }}
-                              className="text-[9px] text-zinc-500 hover:text-zinc-900 font-extrabold flex items-center gap-0.5 cursor-pointer transition-colors"
+                              className="text-[9px] text-zinc-555 hover:text-zinc-900 font-extrabold flex items-center gap-0.5 cursor-pointer transition-colors"
                             >
                               📝 {task.notes ? 'Edit Note' : 'Add Note'}
+                            </button>
+                            <button
+                              onClick={() => {
+                                setActiveDrawerTask(task);
+                                setIsDrawerOpen(true);
+                              }}
+                              className="text-[9px] text-violet-650 hover:text-violet-850 font-extrabold flex items-center gap-0.5 cursor-pointer transition-colors ml-3 border border-violet-100 bg-violet-50/50 px-1.5 py-0.5 rounded-lg"
+                            >
+                              🎓 Study Help
                             </button>
                           </div>
                         </div>
@@ -478,7 +492,7 @@ export default function DashboardPage() {
                         <span className="text-xs font-bold text-emerald-800 block truncate leading-snug">
                           {item.title}
                         </span>
-                        <span className="text-[9px] text-zinc-450 font-medium block uppercase tracking-wider mt-0.5">
+                        <span className="text-[9px] text-zinc-455 font-medium block uppercase tracking-wider mt-0.5">
                           Achieved: {new Date(item.completedAt).toLocaleDateString()}
                         </span>
                       </div>
@@ -493,6 +507,12 @@ export default function DashboardPage() {
         </div>
 
       </div>
+      
+      <TaskChatDrawer 
+        task={activeDrawerTask}
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+      />
     </main>
   );
 }

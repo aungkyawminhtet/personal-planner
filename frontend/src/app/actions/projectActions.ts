@@ -181,3 +181,37 @@ export async function addTaskNotes(id: string, projectId: string, notes: string)
     return { success: false, error: error.message };
   }
 }
+
+export async function getTaskChatHistory(taskId: string) {
+  try {
+    const authHeaders = await getAuthHeader();
+    const response = await fetch(`${API_URL}/api/tasks/${taskId}/chat-history`, {
+      headers: authHeaders,
+      cache: 'no-store'
+    });
+    if (!response.ok) throw new Error('Failed to fetch task chat history');
+    return await response.json();
+  } catch (error: any) {
+    console.error('getTaskChatHistory error:', error);
+    return [];
+  }
+}
+
+export async function askTaskAssistant(taskId: string, projectId: string, message: string) {
+  try {
+    const authHeaders = await getAuthHeader();
+    const response = await fetch(`${API_URL}/api/tasks/${taskId}/ask`, {
+      method: 'POST',
+      headers: {
+        ...authHeaders,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ projectId, message }),
+    });
+    if (!response.ok) throw new Error('Failed to get response from study assistant');
+    return await response.json();
+  } catch (error: any) {
+    console.error('askTaskAssistant error:', error);
+    return { error: error.message };
+  }
+}
