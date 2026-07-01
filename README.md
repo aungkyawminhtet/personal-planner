@@ -1,197 +1,114 @@
 # 🎯 Personal Planner — AI Study Mentor
 
-An AI-powered personal planner that turns your learning goals into structured roadmaps. Define a goal, get a step-by-step plan from Google Gemini, track your progress, and chat with an AI mentor that keeps you on track.
+An AI-powered personal planner that turns your learning goals into structured roadmaps. Describe a goal, get a step-by-step roadmap from Google Gemini, track your progress on a gamified curved path, and consult an AI mentor to stay on pace.
+
+Built as a streamlined, **frontend-only Next.js application** utilizing client-side persistence and API routes for AI integration. No complex database setups or external backend servers required.
+
+---
 
 ## ✨ Features
 
-- **AI Plan Generation** — Describe a goal, get a full roadmap with tasks, deadlines, and difficulty ratings.
-- **AI Mentor Chat** — Context-aware conversational mentor that knows your project.
-- **AI Task Study Assistant** — Contextual chat sidebar drawer for individual tasks to get step-by-step technical guidance, conceptual explanations, or code skeletons.
-- **Pacing Analysis** — AI detects overdue tasks and redistributes deadlines automatically.
-- **Dashboard** — Analytics, daily missions, overdue alerts, and accomplishments tracking.
-- **Difficulty Reduction** — AI simplifies tasks that are too hard by breaking them down.
-- **Task Notes** — Add personal notes to any task.
-- **Notifications** — Overdue task alerts and system messages.
+- **🗺️ Gamified Missions Roadmap** — A Duolingo-style winding road timeline with smooth cubic-bezier SVG curved path lines connecting circular milestones. Alternate toggle lets you view a traditional detail checklist instantly.
+- **⚡ AI Plan Generation** — Describe what you want to learn, and the app builds a multi-step roadmap with tasks, estimated durations, and difficulty levels.
+- **🎓 Task Study Assistant** — Click any mission circle or card to open study help. Engage in a context-aware chat drawer for individual tasks to get step-by-step guides, code examples, or quick explanations.
+- **💬 AI Mentor Chat** — Conversational project mentor that analyzes your pacing, notices overdue steps, and suggests plan adjustments.
+- **🛡️ Resilient Gemini Fallback Engine** — Multi-model failover wrapper that catches quota limits (429), model missing (404), or server overload (503) errors and transparently switches to secondary active models in real-time.
+- **📝 Task Notes** — Add and update personal markdown notes on any milestone to track references and links.
+- **📊 Interactive Dashboard** — Clean visual analytics, daily missions list, overdue task reminders, and accomplishments history.
+
+---
 
 ## 🏗️ Tech Stack
 
 | Layer | Technology |
-|-------|-----------|
-| Frontend | Next.js 16, React 19, Tailwind CSS 4, Zustand, React Hook Form, Zod |
-| Backend | Express 5, MongoDB, Mongoose, JWT, bcryptjs |
-| AI | Google Gemini API (`gemini-3.5-flash`) |
-| Language | TypeScript (full stack) |
+|---|---|
+| **Framework** | Next.js 16 (App Router), React 19, Tailwind CSS 4 |
+| **State & Persistence** | Zustand (automatically persisted to LocalStorage) |
+| **API / AI Integration** | `@google/generative-ai` with multi-model failover |
+| **Validation** | React Hook Form, Zod |
+| **Icons** | Lucide React |
+
+---
 
 ## 📁 Project Structure
 
-```
+```text
 personal-planner/
-├── backend/                  # Express API server
-│   ├── src/
-│   │   ├── controllers/      # Route handlers (auth, ai, project, task, mentor, analytics, notification)
-│   │   ├── models/           # Mongoose schemas (User, Project, Task, MentorAdvice, Notification)
-│   │   ├── routes/           # API route definitions
-│   │   ├── middleware/       # JWT auth middleware
-│   │   ├── dbs/              # MongoDB connection
-│   │   └── index.ts          # Entry point
-│   ├── package.json
-│   └── tsconfig.json
-├── frontend/                 # Next.js app
+├── frontend/                 # Streamlined Next.js App
 │   ├── src/
 │   │   ├── app/
-│   │   │   ├── actions/      # Server actions (auth, plan, project, analytics, mentor, notification)
-│   │   │   ├── dashboard/    # Dashboard page
-│   │   │   ├── project/[id]/ # Project detail page with task checklist + AI mentor
-│   │   │   └── page.tsx      # Goal creation form (root route)
-│   │   ├── components/       # Shared components (AppLayout, TaskChatDrawer)
-│   │   ├── context/          # AuthContext (React Context with automatic seed login)
-│   │   └── store/            # Zustand store (notifications)
+│   │   │   ├── api/          # Next.js Route Handlers (API endpoints for Gemini AI)
+│   │   │   │   ├── generate-plan/
+│   │   │   │   ├── mentor/
+│   │   │   │   └── tasks/
+│   │   │   ├── dashboard/    # Analytics, Daily Missions, & Overdue Alerts
+│   │   │   ├── project/[id]/ # Roadmap details with Map Path & Checklist views + AI Mentor
+│   │   │   └── page.tsx      # Root route: Goal Generation Form
+│   │   ├── components/       # Shared UI components (TaskChatDrawer, AppLayout)
+│   │   ├── lib/              # AI SDK wrapper & multi-model fallback list
+│   │   ├── store/            # Client-side Zustand state store (PlannerStore)
+│   │   └── types/            # TypeScript definitions
 │   ├── package.json
 │   └── tsconfig.json
-├── slides/                   # Pitch deck
-├── report.md                 # Chapter 3 report
-├── CLAUDE.md                 # Claude Code guidance
-└── README.md
+├── docs/                     # Design document assets
+├── report.md                 # Project design report
+├── CLAUDE.md                 # Guidelines and build rules
+└── README.md                 # You are here
 ```
+
+---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
 - **Node.js** v18 or higher
-- **MongoDB** running locally (or a remote connection string)
-- **Google Gemini API key** — get one at [Google AI Studio](https://aistudio.google.com/apikey)
+- **Google Gemini API key** — obtain one at [Google AI Studio](https://aistudio.google.com/apikey)
 
-### 1. Clone the repo
+### 1. Setup Environment
 
-```bash
-git clone git@github.com:aungkyawminhtet/personal-planner.git
-cd personal-planner
-```
-
-### 2. Setup Backend
-
-```bash
-cd backend
-npm install
-```
-
-Create a `.env` file in `backend/`:
+Create a `.env` file inside the `frontend/` directory:
 
 ```env
-PORT=5001
-MONGO_URI=mongodb://admin:tour2026@localhost:27017/vibe_code_tour_db
-GEMINI_API_KEY=your_gemini_api_key_here
+NEXT_PUBLIC_GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
-> ⚠️ Replace `GEMINI_API_KEY` with your actual key. Update `MONGO_URI` if your MongoDB setup differs.
+> ⚠️ Replace `your_gemini_api_key_here` with your actual Google AI Studio API key.
 
-Start the backend:
-
-```bash
-npm run dev
-```
-
-The API server runs at `http://localhost:5001`. On startup, it seeds a demo user:
-
-- **Email:** `mentor@example.com`
-- **Password:** `password123`
-
-### 3. Setup Frontend
+### 2. Install & Start Development Server
 
 ```bash
+# Navigate to frontend folder
 cd frontend
+
+# Install package dependencies
 npm install
+
+# Run the local development server
 npm run dev
 ```
 
-The app runs at `http://localhost:3000`.
-
-### 4. Open the app
-
-Visit [http://localhost:3000](http://localhost:3000). 
-Authentication is **automatically bypassed on startup**, silently logging in with the seeded demo user under the hood so you land directly on the **Generate Goal** page.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## 📡 API Endpoints
+## 🧭 Application Routes
 
-### Auth
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/auth/register` | Register a new user |
-| POST | `/api/auth/login` | Login, returns JWT |
-| GET | `/api/auth/me` | Get current user (auth required) |
-
-### Projects
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/projects` | List user's projects with task counts |
-| GET | `/api/projects/:id` | Get project with tasks |
-| PATCH | `/api/projects/:id/complete` | Mark project as completed |
-| DELETE | `/api/projects/:id` | Delete project and its tasks |
-
-### Tasks
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/tasks/overdue` | Get overdue tasks |
-| PUT | `/api/tasks/:id` | Update task details |
-| PATCH | `/api/tasks/:id/toggle` | Toggle task completion |
-| PATCH | `/api/tasks/:id/reschedule` | Reschedule task deadline |
-| PATCH | `/api/tasks/:id/notes` | Add/update task notes |
-| PATCH | `/api/tasks/:id/reduce-difficulty` | AI simplifies the task |
-| GET | `/api/tasks/:id/chat-history` | Get chat history for a specific task study assistant |
-| POST | `/api/tasks/:id/ask` | Send message to AI task study assistant |
-
-### AI
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/generate-plan` | Generate a roadmap from a goal |
-
-### Mentor
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/mentor/ask` | Send message to AI mentor |
-| GET | `/api/mentor/history/:projectId` | Get chat history |
-| POST | `/api/mentor/analyze` | Run pacing analysis |
-
-### Analytics & Notifications
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/analytics` | Dashboard analytics data |
-| GET | `/api/notifications` | Get user notifications |
-| POST | `/api/notifications/read` | Mark all notifications read |
-| POST | `/api/notifications/check-overdue` | Scan and create overdue notifications |
+* **`/` (Generate Goal)**: Root landing page. Input your learning target, daily available time, current experience level, and preferred speed.
+* **`/dashboard`**: Unified landing dashboard tracking daily missions, visual task progress gauges, overdue warnings, and completed achievements.
+* **`/project/[id]`**: Core roadmap explorer. Features:
+  * Toggle between **🗺️ Map Path** (winding timeline) and **📋 Checklist** views.
+  * Interactive task details popovers with rescheduling, note attachments, difficulty simplification, and Study Help triggers.
+  * Sidebar AI Mentor chat container.
 
 ---
 
-## 🔑 Pages
+## 🛠️ Development & Build Tasks
 
-| Route | Description |
-|-------|-------------|
-| `/` | Goal creation form — describe what you want to learn |
-| `/dashboard` | Overview with analytics, today's missions, accomplishments, notifications |
-| `/project/[id]` | Project detail with task checklist and AI mentor chat |
-
----
-
-## 🛠️ Development Commands
-
-### Backend (from `backend/`)
+From the `frontend/` directory:
 
 ```bash
-npm run dev      # Start dev server with nodemon (port 5001)
-npm run build    # Compile TypeScript to dist/
-npm start        # Run production build
+npm run dev      # Start Next.js development server (port 3000)
+npm run build    # Build optimized production bundle & check TypeScript types
+npm run start    # Start built production server
 ```
-
-### Frontend (from `frontend/`)
-
-```bash
-npm run dev      # Start Next.js dev server (port 3000)
-npm run build    # Production build
-```
-
-## 📄 License
-
-This project was built as part of the Vibe Code Tour — Chapter 3.
