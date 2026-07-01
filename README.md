@@ -1,36 +1,106 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎯 Personal Planner — AI Study Mentor
 
-## Getting Started
+An AI-powered personal planner that turns your learning goals into structured roadmaps. Describe a goal, get a step-by-step roadmap from Google Gemini, track your progress on a gamified curved path, and consult an AI mentor to stay on pace.
 
-First, run the development server:
+**🚀 Live Demo**: [https://personal-planner-nine-phi.vercel.app/](https://personal-planner-nine-phi.vercel.app/)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## ✨ Features
+
+- **🗺️ Gamified Missions Roadmap** — A Duolingo-style winding road timeline with smooth cubic-bezier SVG curved path lines connecting circular milestones. Alternate toggle lets you view a traditional detail checklist instantly.
+- **⚡ AI Plan Generation** — Describe what you want to learn, and the app builds a multi-step roadmap with tasks, estimated durations, and difficulty levels.
+- **🎓 Task Study Assistant** — Click any mission circle or card to open study help. Engage in a context-aware chat drawer for individual tasks to get step-by-step guides, code examples, or quick explanations.
+- **💬 AI Mentor Chat** — Conversational project mentor that analyzes your pacing, notices overdue steps, and suggests plan adjustments.
+- **🛡️ Resilient Gemini Fallback Engine** — Multi-model failover wrapper that catches quota limits (429), model missing (404), or server overload (503) errors and transparently switches to secondary active models in real-time.
+- **📝 Task Notes** — Add and update personal notes on any milestone to track references and links.
+- **📊 Interactive Dashboard** — Clean visual analytics, daily missions list, overdue task reminders, and accomplishments history.
+
+---
+
+## 🏗️ Tech Stack
+
+| Layer | Technology |
+|---|---|
+| **Framework** | Next.js 16 (App Router), React 19, Tailwind CSS 4 |
+| **State & Persistence** | Zustand (automatically persisted to LocalStorage) |
+| **API / AI Integration** | `@google/generative-ai` with multi-model failover |
+| **Validation** | React Hook Form, Zod |
+| **Icons** | Lucide React |
+
+---
+
+## 📁 Project Structure
+
+```text
+personal-planner/
+├── src/
+│   ├── app/
+│   │   ├── api/          # Next.js Route Handlers (API endpoints for Gemini AI)
+│   │   │   ├── generate-plan/
+│   │   │   ├── mentor/
+│   │   │   └── tasks/
+│   │   ├── dashboard/    # Analytics, Daily Missions, & Overdue Alerts
+│   │   ├── project/[id]/ # Roadmap details with Map Path & Checklist views + AI Mentor
+│   │   └── page.tsx      # Root route: Goal Generation Form
+│   ├── components/       # Shared UI components (TaskChatDrawer, AppLayout)
+│   ├── lib/              # AI SDK wrapper & multi-model fallback list
+│   ├── store/            # Client-side Zustand state store (usePlannerStore)
+│   └── types/            # TypeScript definitions
+├── public/               # Static assets
+├── package.json
+├── tsconfig.json
+└── README.md             # You are here
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🚀 Getting Started
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Prerequisites
 
-## Learn More
+- **Node.js** v18 or higher
+- **Google Gemini API key** — obtain one at [Google AI Studio](https://aistudio.google.com/apikey)
 
-To learn more about Next.js, take a look at the following resources:
+### 1. Setup Environment
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Create a `.env` file inside the root directory:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```env
+GEMINI_API_KEY=your_gemini_api_key_here
+```
 
-## Deploy on Vercel
+> ⚠️ Replace `your_gemini_api_key_here` with your actual Google AI Studio API key.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 2. Install & Start Development Server
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+# Install package dependencies
+npm install
+
+# Run the local development server
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+---
+
+## 🧭 Application Routes
+
+* **`/` (Generate Goal)**: Root landing page. Input your learning target, daily available time, current experience level, and preferred speed.
+* **`/dashboard`**: Unified landing dashboard tracking daily missions, visual task progress gauges, overdue warnings, and completed achievements.
+* **`/project/[id]`**: Core roadmap explorer. Features:
+  * Toggle between **🗺️ Map Path** (winding timeline) and **📋 Checklist** views.
+  * Interactive task details popovers with rescheduling, note attachments, difficulty simplification, and Study Help triggers.
+  * Sidebar AI Mentor chat container.
+
+---
+
+## 🛠️ Development & Build Tasks
+
+```bash
+npm run dev      # Start Next.js development server (port 3000)
+npm run build    # Build optimized production bundle & check TypeScript types
+npm run start    # Start built production server
+```
