@@ -70,7 +70,7 @@ personal-planner/
 Create a `.env` file inside the `frontend/` directory:
 
 ```env
-NEXT_PUBLIC_GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
 > ⚠️ Replace `your_gemini_api_key_here` with your actual Google AI Studio API key.
