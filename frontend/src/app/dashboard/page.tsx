@@ -1,223 +1,157 @@
-'use client'
+'use client';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { getDashboardAnalytics } from '../actions/analyticsActions';
-import { deleteProject, toggleTask, addTaskNotes } from '../actions/projectActions';
 import { usePlannerStore } from '@/store/usePlannerStore';
-import { 
-  Plus, Bell, CheckCircle2, AlertCircle, Trash2, Calendar, 
-  TrendingUp, Award, Clock, ChevronRight, CheckSquare, Sparkles, RefreshCw
+import TaskChatDrawer from '@/components/TaskChatDrawer';
+import {
+  Plus,
+  Bell,
+  CheckCircle2,
+  AlertCircle,
+  Trash2,
+  TrendingUp,
+  Award,
+  Clock,
+  CheckSquare,
+  Sparkles,
+  RefreshCw,
+  Target,
+  ArrowRight,
+  X,
 } from 'lucide-react';
-import TaskChatDrawer from '../../components/TaskChatDrawer';
 
 export default function DashboardPage() {
-  const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const {
+    notifications,
+    markNotificationsRead,
+    scanOverdueMissions,
+    getAnalytics,
+    toggleTask,
+    addTaskNotes,
+    deleteProject,
+  } = usePlannerStore();
+
   const [showNotifications, setShowNotifications] = useState(false);
   const [expandedNotesTaskId, setExpandedNotesTaskId] = useState<string | null>(null);
   const [taskNotesInput, setTaskNotesInput] = useState('');
-  
-  // Drawer task states
   const [activeDrawerTask, setActiveDrawerTask] = useState<any>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  // Zustand Store
-  const { 
-    notifications, 
-    unreadCount, 
-    fetchNotifications, 
-    markNotificationsRead, 
-    scanOverdueMissions 
-  } = usePlannerStore();
+  const data = getAnalytics();
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
+  const overdueMissions = notifications.filter((n) => n.type === 'overdue' && !n.isRead);
 
-  const fetchAllData = async () => {
-    try {
-      const res = await getDashboardAnalytics();
-      if (res) {
-        setData(res);
-      } else {
-        setError('Failed to fetch dashboard metrics.');
-      }
-    } catch (err) {
-      setError('An error occurred loading dashboard.');
-    } finally {
-      setLoading(false);
-    }
+  const handleToggleTask = (taskId: string, projectId: string) => {
+    toggleTask(taskId, projectId);
   };
 
-  useEffect(() => {
-    fetchAllData();
-    fetchNotifications();
-  }, []);
-
-  const handleToggleTask = async (taskId: string, projectId: string) => {
-    setData((prev: any) => {
-      if (!prev) return prev;
-      const updatedToday = prev.todayMissions.map((t: any) => 
-        t._id === taskId ? { ...t, isCompleted: !t.isCompleted } : t
-      );
-      let newlyCompleted = prev.completedTasks;
-      const wasCompleted = prev.todayMissions.find((t: any) => t._id === taskId)?.isCompleted;
-      if (wasCompleted) {
-        newlyCompleted--;
-      } else {
-        newlyCompleted++;
-      }
-      return {
-        ...prev,
-        todayMissions: updatedToday,
-        completedTasks: newlyCompleted,
-        completionRate: prev.totalTasks > 0 ? Math.round((newlyCompleted / prev.totalTasks) * 100) : 0
-      };
-    });
-
-    const res = await toggleTask(taskId, projectId);
-    if (!res.success) {
-      alert('Failed to update task: ' + res.error);
-      fetchAllData();
-    }
-  };
-
-  const handleSaveNotes = async (taskId: string, projectId: string) => {
-    setData((prev: any) => {
-      if (!prev) return prev;
-      const updatedToday = prev.todayMissions.map((t: any) => 
-        t._id === taskId ? { ...t, notes: taskNotesInput } : t
-      );
-      return {
-        ...prev,
-        todayMissions: updatedToday
-      };
-    });
+  const handleSaveNotes = (taskId: string, projectId: string) => {
+    addTaskNotes(taskId, projectId, taskNotesInput);
     setExpandedNotesTaskId(null);
-
-    const res = await addTaskNotes(taskId, projectId, taskNotesInput);
-    if (!res.success) {
-      alert('Failed to save task note: ' + res.error);
-      fetchAllData();
-    }
   };
 
-  const handleDeleteProject = async (projectId: string) => {
-    if (!confirm('Are you sure you want to delete this goal and all of its missions?')) return;
-    
-    const res = await deleteProject(projectId);
-    if (res.success) {
-      fetchAllData();
-    } else {
-      alert('Failed to delete goal: ' + res.error);
-    }
+  const handleDeleteProject = (projectId: string) => {
+    if (!confirm('Delete this goal and all its missions?')) return;
+    deleteProject(projectId);
   };
 
-  const handleTriggerScan = async () => {
-    setLoading(true);
-    await scanOverdueMissions();
-    await fetchAllData();
-    setLoading(false);
+  const handleTriggerScan = () => {
+    scanOverdueMissions();
   };
 
-  if (loading && !data) {
+  // Empty state
+  if (data.activeGoalsCount === 0 && data.completedGoalsCount === 0) {
     return (
-      <div className="min-h-screen bg-zinc-50 flex items-center justify-center font-sans">
-        <div className="flex flex-col items-center gap-3">
-          <svg className="animate-spin h-8 w-8 text-violet-650" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <span className="text-zinc-500 font-semibold text-sm">Synchronizing Planner...</span>
+      <main className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-4 relative overflow-hidden">
+        <div className="absolute top-[-20%] left-[-10%] w-[400px] h-[400px] rounded-full bg-violet-200/20 blur-[100px] pointer-events-none" />
+        <div className="text-center space-y-6 relative z-10 max-w-md">
+          <div className="w-20 h-20 mx-auto bg-gradient-to-br from-violet-100 to-indigo-100 rounded-3xl flex items-center justify-center">
+            <Target className="w-10 h-10 text-violet-500" />
+          </div>
+          <h2 className="text-2xl font-black text-zinc-900">No Goals Yet</h2>
+          <p className="text-zinc-500 text-sm leading-relaxed">
+            Create your first learning goal and let AI build a personalized roadmap for you.
+          </p>
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-500 text-white font-bold text-sm py-3 px-6 rounded-2xl shadow-lg shadow-violet-500/20 hover:shadow-xl hover:shadow-violet-500/30 hover:-translate-y-0.5 transition-all"
+          >
+            <Plus className="w-4 h-4" /> Create Your First Goal
+          </Link>
         </div>
-      </div>
+      </main>
     );
   }
-
-  if (error || !data) {
-    return (
-      <div className="min-h-screen bg-zinc-50 flex items-center justify-center font-sans">
-        <div className="bg-white border border-zinc-200 p-8 rounded-3xl text-center max-w-sm shadow-xl">
-          <h2 className="text-red-650 font-bold text-lg mb-2">Error</h2>
-          <p className="text-zinc-500 text-sm mb-6">{error || 'Failed to load'}</p>
-          <button onClick={fetchAllData} className="bg-violet-650 hover:bg-violet-550 text-white py-2.5 px-5 rounded-xl text-sm font-semibold transition-all cursor-pointer">
-            Retry Connection
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const overdueMissions = notifications.filter(n => n.type === 'overdue' && !n.isRead);
 
   return (
-    <main className="min-h-screen bg-zinc-50 text-zinc-800 py-10 px-4 sm:px-6 lg:px-8 font-sans relative overflow-hidden">
-      
-      {/* Background glow blobs */}
-      <div className="absolute top-[-10%] left-[-15%] w-[400px] h-[400px] rounded-full bg-violet-500/5 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-15%] w-[400px] h-[400px] rounded-full bg-emerald-500/5 blur-[120px] pointer-events-none" />
+    <main className="min-h-[calc(100vh-4rem)] py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Background */}
+      <div className="absolute top-[-15%] left-[-10%] w-[500px] h-[500px] rounded-full bg-violet-200/15 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-15%] right-[-10%] w-[500px] h-[500px] rounded-full bg-indigo-200/15 blur-[120px] pointer-events-none" />
 
-      <div className="max-w-5xl mx-auto space-y-8 relative z-10">
-        
+      <div className="max-w-6xl mx-auto space-y-8 relative z-10">
         {/* Header */}
-        <header className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-white/80 backdrop-blur-md p-6 rounded-3xl border border-zinc-200/80 shadow-sm">
+        <header className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl font-black text-zinc-900 tracking-tight flex items-center gap-2">
-              <Sparkles className="w-6 h-6 text-violet-650" /> Mentor Dashboard
+            <h1 className="text-2xl sm:text-3xl font-black text-zinc-900 tracking-tight flex items-center gap-2">
+              <Sparkles className="w-6 h-6 text-violet-500" /> Dashboard
             </h1>
-            <p className="text-zinc-550 text-sm mt-0.5 font-medium">Welcome back! Review your active paths and missions.</p>
+            <p className="text-zinc-400 text-sm mt-1 font-medium">
+              Track your progress and manage your learning missions.
+            </p>
           </div>
-          
           <div className="flex items-center gap-3">
-            {/* Notification Bell */}
+            {/* Notifications */}
             <div className="relative">
-              <button 
+              <button
                 onClick={() => {
                   setShowNotifications(!showNotifications);
-                  if (!showNotifications && unreadCount > 0) {
-                    markNotificationsRead();
-                  }
+                  if (!showNotifications && unreadCount > 0) markNotificationsRead();
                 }}
                 className={`p-3 rounded-xl border transition-all cursor-pointer ${
-                  unreadCount > 0 
-                    ? 'bg-violet-50 border-violet-200 text-violet-600 hover:bg-violet-100' 
-                    : 'bg-white border-zinc-200 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50'
+                  unreadCount > 0
+                    ? 'bg-violet-50 border-violet-200 text-violet-600'
+                    : 'bg-white border-zinc-200 text-zinc-400 hover:text-zinc-600'
                 }`}
-                title="Notifications"
               >
                 <Bell className="w-5 h-5" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-1.5 right-1.5 bg-violet-600 text-white w-4.5 h-4.5 rounded-full flex items-center justify-center text-[9px] font-bold border-2 border-white">
+                  <span className="absolute -top-1 -right-1 bg-violet-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold border-2 border-white">
                     {unreadCount}
                   </span>
                 )}
               </button>
-
-              {/* Notification Dropdown Drawer */}
               {showNotifications && (
-                <div className="absolute right-0 mt-3 w-85 bg-white border border-zinc-200 rounded-2xl p-4 shadow-2xl z-30 space-y-3">
+                <div className="absolute right-0 mt-3 w-80 bg-white border border-zinc-200 rounded-2xl p-4 shadow-2xl z-40 space-y-3">
                   <div className="flex justify-between items-center border-b border-zinc-100 pb-2">
-                    <span className="font-bold text-xs uppercase tracking-wider text-zinc-400">Notifications</span>
-                    <button 
+                    <span className="font-bold text-xs uppercase tracking-wider text-zinc-400">
+                      Notifications
+                    </span>
+                    <button
                       onClick={() => setShowNotifications(false)}
-                      className="text-zinc-550 hover:text-zinc-900 text-xs cursor-pointer font-bold"
+                      className="text-zinc-400 hover:text-zinc-600 cursor-pointer"
                     >
-                      Close
+                      <X className="w-4 h-4" />
                     </button>
                   </div>
                   <div className="max-h-60 overflow-y-auto space-y-2">
                     {notifications.length === 0 ? (
-                      <p className="text-zinc-400 text-xs text-center py-4">No notifications yet.</p>
+                      <p className="text-zinc-400 text-xs text-center py-4">
+                        No notifications yet.
+                      </p>
                     ) : (
                       notifications.map((n) => (
-                        <div 
-                          key={n._id} 
-                          className={`p-2.5 rounded-xl border text-[11px] leading-relaxed transition-all ${
-                            n.type === 'overdue' 
-                              ? 'bg-red-50 border-red-100 text-red-800' 
-                              : 'bg-zinc-50 border-zinc-150 text-zinc-650'
-                          } ${!n.isRead ? 'border-l-4 border-l-violet-600' : ''}`}
+                        <div
+                          key={n.id}
+                          className={`p-3 rounded-xl border text-xs leading-relaxed ${
+                            n.type === 'overdue'
+                              ? 'bg-red-50 border-red-100 text-red-700'
+                              : 'bg-zinc-50 border-zinc-100 text-zinc-600'
+                          } ${!n.isRead ? 'border-l-4 border-l-violet-500' : ''}`}
                         >
                           {n.message}
-                          <span className="block text-[9px] text-zinc-400 font-semibold mt-1">
+                          <span className="block text-[10px] text-zinc-400 mt-1">
                             {new Date(n.createdAt).toLocaleDateString()}
                           </span>
                         </div>
@@ -227,35 +161,32 @@ export default function DashboardPage() {
                 </div>
               )}
             </div>
-
-            {/* Run overdue scan button */}
             <button
               onClick={handleTriggerScan}
-              className="p-3 bg-white border border-zinc-200 text-zinc-650 hover:text-zinc-900 hover:bg-zinc-50 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-xs font-bold"
-              title="Trigger Scan for Overdue Tasks & Emails"
+              className="p-3 bg-white border border-zinc-200 text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50 rounded-xl transition-all cursor-pointer"
+              title="Scan for overdue tasks"
             >
-              <RefreshCw className="w-4 h-4 text-zinc-500" /> Check Overdue
+              <RefreshCw className="w-5 h-5" />
             </button>
-
-            <Link 
-              href="/" 
-              className="bg-violet-600 hover:bg-violet-555 text-white font-bold text-xs py-3.5 px-4 rounded-xl shadow-lg shadow-violet-600/10 transition-all flex items-center gap-1.5"
+            <Link
+              href="/"
+              className="bg-gradient-to-r from-violet-600 to-indigo-500 text-white font-bold text-xs py-3 px-5 rounded-xl shadow-lg shadow-violet-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center gap-1.5"
             >
               <Plus className="w-4 h-4" /> New Goal
             </Link>
           </div>
         </header>
 
-        {/* Alerts / Warnings Banner */}
+        {/* Overdue alert */}
         {overdueMissions.length > 0 && (
-          <section className="bg-red-50 border border-red-150 rounded-3xl p-5 shadow-sm flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-red-650 shrink-0 mt-0.5" />
-            <div className="space-y-1.5 flex-1">
-              <h2 className="text-red-750 font-extrabold text-sm flex items-center gap-1.5">
-                Overdue Missions Detected ({overdueMissions.length})
+          <section className="bg-red-50 border border-red-100 rounded-2xl p-5 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+            <div className="space-y-1 flex-1">
+              <h2 className="text-red-700 font-bold text-sm">
+                Overdue Missions ({overdueMissions.length})
               </h2>
-              <p className="text-xs text-red-650 leading-relaxed font-medium">
-                You have pending goals with elapsed deadlines. An email summary report has been compiled. You can reschedule these tasks or ask your AI Mentor to re-pace your roadmap.
+              <p className="text-xs text-red-600">
+                You have tasks past their deadline. Reschedule them or ask your AI Mentor to re-pace your roadmap.
               </p>
             </div>
           </section>
@@ -263,132 +194,147 @@ export default function DashboardPage() {
 
         {/* Stats Grid */}
         <section className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          <div className="bg-white p-5 rounded-3xl border border-zinc-200/80 shadow-xs flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-violet-50 text-violet-650 border border-violet-100 flex items-center justify-center shadow-xs">
-              <Clock className="w-6 h-6" />
+          {[
+            {
+              icon: <Clock className="w-6 h-6" />,
+              label: 'Active Goals',
+              value: data.activeGoalsCount,
+              color: 'violet',
+              bg: 'from-violet-50 to-indigo-50',
+              border: 'border-violet-100',
+              text: 'text-violet-600',
+            },
+            {
+              icon: <Award className="w-6 h-6" />,
+              label: 'Accomplished',
+              value: data.completedGoalsCount,
+              color: 'emerald',
+              bg: 'from-emerald-50 to-teal-50',
+              border: 'border-emerald-100',
+              text: 'text-emerald-600',
+            },
+            {
+              icon: <TrendingUp className="w-6 h-6" />,
+              label: 'Completion Rate',
+              value: `${data.completionRate}%`,
+              color: 'sky',
+              bg: 'from-sky-50 to-blue-50',
+              border: 'border-sky-100',
+              text: 'text-sky-600',
+            },
+          ].map((stat) => (
+            <div
+              key={stat.label}
+              className={`bg-gradient-to-br ${stat.bg} p-5 rounded-2xl border ${stat.border} flex items-center gap-4`}
+            >
+              <div className={`w-12 h-12 rounded-2xl bg-white ${stat.text} flex items-center justify-center shadow-sm`}>
+                {stat.icon}
+              </div>
+              <div>
+                <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider block">
+                  {stat.label}
+                </span>
+                <span className="text-2xl font-black text-zinc-900 block mt-0.5">
+                  {stat.value}
+                </span>
+              </div>
             </div>
-            <div>
-              <span className="text-xs font-bold text-zinc-450 uppercase tracking-wider block">Active Goals</span>
-              <span className="text-2xl font-black text-zinc-900 block mt-0.5">{data.activeGoalsCount}</span>
-            </div>
-          </div>
-          <div className="bg-white p-5 rounded-3xl border border-zinc-200/80 shadow-xs flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-650 border border-emerald-100 flex items-center justify-center shadow-xs">
-              <Award className="w-6 h-6" />
-            </div>
-            <div>
-              <span className="text-xs font-bold text-zinc-450 uppercase tracking-wider block">Accomplished</span>
-              <span className="text-2xl font-black text-zinc-900 block mt-0.5">{data.completedGoalsCount}</span>
-            </div>
-          </div>
-          <div className="bg-white p-5 rounded-3xl border border-zinc-200/80 shadow-xs flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-sky-50 text-sky-650 border border-sky-100 flex items-center justify-center shadow-xs">
-              <TrendingUp className="w-6 h-6" />
-            </div>
-            <div>
-              <span className="text-xs font-bold text-zinc-450 uppercase tracking-wider block">Completion Rate</span>
-              <span className="text-2xl font-black text-zinc-900 block mt-0.5">{data.completionRate}%</span>
-            </div>
-          </div>
+          ))}
         </section>
 
-        {/* Dashboard Split Panel */}
+        {/* Main Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          {/* Main Side - Checklist & Analytics */}
+          {/* Left: Today's Missions + Chart */}
           <div className="lg:col-span-2 space-y-6">
-            
             {/* Today's Missions */}
-            <section className="bg-white border border-zinc-200/80 rounded-3xl p-6 shadow-sm space-y-4">
+            <section className="bg-white border border-zinc-100 rounded-2xl p-6 shadow-sm space-y-4">
               <h2 className="text-lg font-black text-zinc-900 flex items-center gap-2">
-                <CheckSquare className="w-5 h-5 text-violet-650" /> Today's Missions
+                <CheckSquare className="w-5 h-5 text-violet-500" /> Today's Missions
               </h2>
-
               {data.todayMissions.length === 0 ? (
-                <div className="text-center py-8 text-zinc-450 text-xs bg-zinc-50 border border-zinc-200/60 border-dashed rounded-2xl">
-                  No missions scheduled for today. Take a rest or inspect upcoming steps!
+                <div className="text-center py-8 text-zinc-400 text-sm bg-zinc-50 border border-zinc-100 border-dashed rounded-2xl">
+                  No missions scheduled for today. Take a rest or check upcoming steps!
                 </div>
               ) : (
-                <div className="space-y-2.5">
-                  {data.todayMissions.map((task: any) => (
-                    <div 
-                      key={task._id} 
-                      className={`flex flex-col gap-2.5 p-3.5 rounded-2xl border transition-all ${
-                        task.isCompleted 
-                          ? 'bg-zinc-50 border-zinc-200 opacity-60' 
-                          : 'bg-white border-zinc-200 hover:border-zinc-300 shadow-xs'
+                <div className="space-y-2">
+                  {data.todayMissions.map((task) => (
+                    <div
+                      key={task.id}
+                      className={`flex flex-col gap-2 p-4 rounded-2xl border transition-all duration-200 ${
+                        task.isCompleted
+                          ? 'bg-zinc-50 border-zinc-100 opacity-60'
+                          : 'bg-white border-zinc-100 hover:border-zinc-200 hover:shadow-sm'
                       }`}
                     >
                       <div className="flex items-start gap-3 w-full">
-                        <input 
+                        <input
                           type="checkbox"
                           checked={task.isCompleted}
-                          onChange={() => handleToggleTask(task._id, task.projectId?._id || task.projectId)}
-                          className="mt-0.5 h-4.5 w-4.5 rounded border-zinc-300 bg-white text-violet-650 focus:ring-violet-500 cursor-pointer"
+                          onChange={() => handleToggleTask(task.id, task.projectId)}
+                          className="mt-0.5 h-5 w-5 rounded-md border-zinc-300 text-violet-600 focus:ring-violet-500 cursor-pointer accent-violet-600"
                         />
                         <div className="flex-1 min-w-0">
-                          <span className={`text-xs font-bold flex items-center gap-1.5 ${task.isCompleted ? 'text-zinc-400' : 'text-zinc-800'}`}>
+                          <span
+                            className={`text-sm font-bold flex items-center gap-2 ${
+                              task.isCompleted ? 'text-zinc-400 line-through' : 'text-zinc-800'
+                            }`}
+                          >
                             {task.title}
                             {task.isCompleted && (
-                              <span className="text-[8px] bg-emerald-50 text-emerald-600 border border-emerald-100 font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0">
-                                Completed
+                              <span className="text-[9px] bg-emerald-50 text-emerald-600 border border-emerald-100 font-bold px-2 py-0.5 rounded-full">
+                                Done
                               </span>
                             )}
                           </span>
-                          <span className="text-[10px] text-zinc-455 font-medium block truncate">
-                            Goal: {task.projectId?.title || 'Unknown Project'}
+                          <span className="text-xs text-zinc-400 font-medium block mt-0.5">
+                            {task.projectTitle}
                           </span>
-
-                          {/* Notes Preview */}
                           {task.notes && (
-                            <div className="bg-zinc-50 border border-zinc-150 p-2 rounded-xl text-[9px] text-zinc-550 mt-1.5 font-mono leading-normal">
-                              <span className="font-bold text-zinc-400 block uppercase tracking-wider text-[8px] mb-0.5">Note:</span>
+                            <div className="bg-zinc-50 border border-zinc-100 p-2 rounded-lg text-[11px] text-zinc-500 mt-2 font-mono">
                               {task.notes}
                             </div>
                           )}
-
-                          {/* Note Action Trigger */}
-                          <div className="flex items-center gap-2 mt-1.5">
+                          <div className="flex items-center gap-3 mt-2">
                             <button
                               onClick={() => {
-                                setExpandedNotesTaskId(expandedNotesTaskId === task._id ? null : task._id);
+                                setExpandedNotesTaskId(
+                                  expandedNotesTaskId === task.id ? null : task.id
+                                );
                                 setTaskNotesInput(task.notes || '');
                               }}
-                              className="text-[9px] text-zinc-555 hover:text-zinc-900 font-extrabold flex items-center gap-0.5 cursor-pointer transition-colors"
+                              className="text-[11px] text-zinc-400 hover:text-zinc-700 font-bold cursor-pointer transition-colors"
                             >
-                              📝 {task.notes ? 'Edit Note' : 'Add Note'}
+                              {task.notes ? 'Edit Note' : '+ Note'}
                             </button>
                             <button
                               onClick={() => {
                                 setActiveDrawerTask(task);
                                 setIsDrawerOpen(true);
                               }}
-                              className="text-[9px] text-violet-650 hover:text-violet-850 font-extrabold flex items-center gap-0.5 cursor-pointer transition-colors ml-3 border border-violet-100 bg-violet-50/50 px-1.5 py-0.5 rounded-lg"
+                              className="text-[11px] text-violet-600 hover:text-violet-800 font-bold cursor-pointer transition-colors bg-violet-50 px-2 py-1 rounded-lg"
                             >
-                              🎓 Study Help
+                              Study Help
                             </button>
                           </div>
                         </div>
-                        <span className="text-[10px] bg-zinc-50 border border-zinc-200 px-2.5 py-1 rounded-full text-zinc-650 font-bold shrink-0">
-                          {task.estimatedHours} hrs
+                        <span className="text-xs bg-zinc-100 text-zinc-500 font-bold px-3 py-1 rounded-full shrink-0">
+                          {task.estimatedHours}h
                         </span>
                       </div>
-
-                      {/* Expandable Notes Editor */}
-                      {expandedNotesTaskId === task._id && (
-                        <div className="w-full bg-zinc-50 p-3 rounded-2xl border border-zinc-200 space-y-2 mt-1">
+                      {expandedNotesTaskId === task.id && (
+                        <div className="w-full bg-zinc-50 p-3 rounded-xl border border-zinc-100 space-y-2">
                           <textarea
                             value={taskNotesInput}
                             onChange={(e) => setTaskNotesInput(e.target.value)}
-                            className="w-full bg-white border border-zinc-200 text-xs text-zinc-800 p-2.5 rounded-xl focus:outline-none focus:border-violet-500 resize-none h-14 shadow-xs"
-                            placeholder="Jot down notes, links, or progress thoughts..."
+                            className="w-full bg-white border border-zinc-200 text-xs text-zinc-800 p-3 rounded-xl focus:outline-none focus:border-violet-400 resize-none h-16"
+                            placeholder="Jot down notes..."
                           />
                           <div className="flex justify-end">
                             <button
-                              onClick={() => handleSaveNotes(task._id, task.projectId?._id || task.projectId)}
-                              className="bg-violet-650 hover:bg-violet-555 text-white font-bold text-[9px] py-1.5 px-3.5 rounded-lg flex items-center gap-1 cursor-pointer"
+                              onClick={() => handleSaveNotes(task.id, task.projectId)}
+                              className="bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs py-2 px-4 rounded-lg cursor-pointer transition-colors"
                             >
-                              Save Note
+                              Save
                             </button>
                           </div>
                         </div>
@@ -399,101 +345,130 @@ export default function DashboardPage() {
               )}
             </section>
 
-            {/* Productivity Analytics charts */}
-            <section className="bg-white border border-zinc-200/80 rounded-3xl p-6 shadow-sm space-y-4">
+            {/* Completion Trends */}
+            <section className="bg-white border border-zinc-100 rounded-2xl p-6 shadow-sm space-y-4">
               <h2 className="text-lg font-black text-zinc-900 flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-violet-650" /> Productivity Analytics
+                <TrendingUp className="w-5 h-5 text-violet-500" /> Weekly Progress
               </h2>
-              <div className="flex items-end justify-between gap-2.5 pt-4 h-36">
-                {data.completionTrends.map((trend: any) => {
-                  const maxVal = Math.max(...data.completionTrends.map((t: any) => t.count), 1);
+              <div className="flex items-end justify-between gap-3 pt-4 h-40">
+                {data.completionTrends.map((trend) => {
+                  const maxVal = Math.max(
+                    ...data.completionTrends.map((t) => t.count),
+                    1
+                  );
                   const heightPercent = Math.round((trend.count / maxVal) * 100);
                   return (
-                    <div key={trend.date} className="flex flex-col items-center gap-2 flex-1">
-                      <div className="w-full bg-zinc-50 h-24 rounded-lg relative overflow-hidden flex items-end">
-                        <div 
-                          className="w-full bg-linear-to-t from-violet-500 to-indigo-400 rounded-lg transition-all duration-500" 
-                          style={{ height: `${heightPercent}%` }}
+                    <div
+                      key={trend.date}
+                      className="flex flex-col items-center gap-2 flex-1"
+                    >
+                      <span className="text-xs font-bold text-zinc-600">
+                        {trend.count}
+                      </span>
+                      <div className="w-full bg-zinc-50 h-28 rounded-xl relative overflow-hidden flex items-end">
+                        <div
+                          className="w-full bg-gradient-to-t from-violet-500 to-indigo-400 rounded-xl transition-all duration-700 ease-out"
+                          style={{ height: `${Math.max(heightPercent, 5)}%` }}
                         />
                       </div>
-                      <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">{trend.date}</span>
+                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                        {trend.date}
+                      </span>
                     </div>
                   );
                 })}
               </div>
             </section>
-
           </div>
 
-          {/* Right Side - Active Goals & Accomplishments */}
+          {/* Right: Active Goals + Accomplishments */}
           <div className="space-y-6">
-            
-            {/* Active Goals List */}
-            <section className="bg-white border border-zinc-200/80 rounded-3xl p-6 shadow-sm space-y-4">
-              <h2 className="text-xs font-black uppercase text-zinc-400 tracking-wider">Active Paths</h2>
-              
+            {/* Active Goals */}
+            <section className="bg-white border border-zinc-100 rounded-2xl p-6 shadow-sm space-y-4">
+              <h2 className="text-xs font-black uppercase text-zinc-400 tracking-wider">
+                Active Paths
+              </h2>
               {data.activeGoalsCount === 0 ? (
-                <div className="text-center py-6 text-zinc-400 text-xs">
-                  Create a new study goal to get started!
-                </div>
+                <p className="text-zinc-400 text-xs text-center py-4">
+                  Create a new goal to get started!
+                </p>
               ) : (
-                <div className="space-y-3.5">
-                  {data.todayMissions.reduce((acc: any[], item: any) => {
-                    if (item.projectId && !acc.some(p => p._id === item.projectId._id)) {
-                      acc.push(item.projectId);
-                    }
-                    return acc;
-                  }, []).map((proj: any) => (
-                    <div key={proj._id} className="group bg-zinc-50 border border-zinc-150 p-3 rounded-2xl flex items-center justify-between hover:border-zinc-250 transition-colors">
-                      <Link href={`/project/${proj._id}`} className="flex-1 min-w-0 pr-2">
-                        <span className="text-xs font-bold text-zinc-800 group-hover:text-violet-650 transition-colors truncate block">
-                          {proj.title}
-                        </span>
-                        <span className="text-[9px] text-zinc-450 font-bold block uppercase tracking-wider">
-                          View Roadmap →
-                        </span>
-                      </Link>
-                      <button 
-                        onClick={() => handleDeleteProject(proj._id)}
-                        className="text-zinc-400 hover:text-red-650 p-1.5 rounded-lg hover:bg-white transition-colors cursor-pointer"
-                        title="Delete Goal"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ))}
-                  {data.todayMissions.length === 0 && (
-                    <p className="text-zinc-455 text-xs italic text-center py-2">
-                      Please enter a goal to plan.
-                    </p>
-                  )}
+                <div className="space-y-3">
+                  {(() => {
+                    const activeProjects = usePlannerStore.getState().projects.filter(
+                      (p) => p.status === 'active'
+                    );
+                    return activeProjects.map((proj) => {
+                      const projTasks = usePlannerStore.getState().tasks[proj.id] || [];
+                      const completed = projTasks.filter((t) => t.isCompleted).length;
+                      const total = projTasks.length;
+                      const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+                      return (
+                        <div
+                          key={proj.id}
+                          className="group bg-zinc-50 border border-zinc-100 p-4 rounded-2xl hover:border-zinc-200 hover:shadow-sm transition-all"
+                        >
+                          <Link
+                            href={`/project/${proj.id}`}
+                            className="flex items-center justify-between"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <span className="text-sm font-bold text-zinc-800 group-hover:text-violet-600 transition-colors truncate block">
+                                {proj.title}
+                              </span>
+                              <div className="flex items-center gap-2 mt-1.5">
+                                <div className="flex-1 bg-zinc-200 h-1.5 rounded-full overflow-hidden">
+                                  <div
+                                    className="h-full bg-gradient-to-r from-violet-500 to-indigo-400 rounded-full transition-all"
+                                    style={{ width: `${pct}%` }}
+                                  />
+                                </div>
+                                <span className="text-[10px] font-bold text-zinc-400">
+                                  {pct}%
+                                </span>
+                              </div>
+                            </div>
+                            <ArrowRight className="w-4 h-4 text-zinc-300 group-hover:text-violet-500 transition-colors ml-3" />
+                          </Link>
+                          <button
+                            onClick={() => handleDeleteProject(proj.id)}
+                            className="mt-2 text-[10px] text-zinc-400 hover:text-red-500 font-bold cursor-pointer transition-colors"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      );
+                    });
+                  })()}
                 </div>
               )}
             </section>
 
-            {/* Achievements Gallery */}
-            <section className="bg-white border border-zinc-200/80 rounded-3xl p-6 shadow-sm space-y-4">
+            {/* Accomplishments */}
+            <section className="bg-white border border-zinc-100 rounded-2xl p-6 shadow-sm space-y-4">
               <h2 className="text-xs font-black uppercase text-zinc-400 tracking-wider flex items-center gap-1.5">
-                <Award className="w-4 h-4 text-violet-650" /> Accomplishments
+                <Award className="w-4 h-4 text-violet-500" /> Accomplishments
               </h2>
-
               {data.accomplishments.length === 0 ? (
-                <div className="text-center py-6 text-zinc-400 text-xs border border-zinc-150 border-dashed rounded-2xl">
-                  Complete your first goal to earn your first accomplishment badge!
+                <div className="text-center py-6 text-zinc-400 text-xs border border-zinc-100 border-dashed rounded-2xl">
+                  Complete your first goal to earn a badge!
                 </div>
               ) : (
-                <div className="space-y-3.5">
-                  {data.accomplishments.map((item: any) => (
-                    <div key={item.id} className="bg-emerald-50 border border-emerald-100 p-3.5 rounded-2xl flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 border border-emerald-200 flex items-center justify-center shrink-0">
+                <div className="space-y-3">
+                  {data.accomplishments.map((item) => (
+                    <div
+                      key={item.id}
+                      className="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 p-4 rounded-2xl flex items-center gap-3"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-white text-emerald-600 border border-emerald-200 flex items-center justify-center shrink-0 text-lg">
                         🏆
                       </div>
                       <div className="min-w-0 flex-1">
-                        <span className="text-xs font-bold text-emerald-800 block truncate leading-snug">
+                        <span className="text-sm font-bold text-emerald-800 truncate block">
                           {item.title}
                         </span>
-                        <span className="text-[9px] text-zinc-455 font-medium block uppercase tracking-wider mt-0.5">
-                          Achieved: {new Date(item.completedAt).toLocaleDateString()}
+                        <span className="text-[10px] text-zinc-400 font-medium block mt-0.5">
+                          Achieved
                         </span>
                       </div>
                     </div>
@@ -501,14 +476,11 @@ export default function DashboardPage() {
                 </div>
               )}
             </section>
-
           </div>
-
         </div>
-
       </div>
-      
-      <TaskChatDrawer 
+
+      <TaskChatDrawer
         task={activeDrawerTask}
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
